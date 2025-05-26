@@ -1,4 +1,4 @@
-package jiohh.springlogin.interceptor;
+package jiohh.springlogin.config.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
