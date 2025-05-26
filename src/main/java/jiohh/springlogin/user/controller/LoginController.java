@@ -1,15 +1,14 @@
-package jiohh.springlogin.controller;
+package jiohh.springlogin.user.controller;
 
 import jakarta.servlet.http.HttpSession;
-import jiohh.springlogin.dto.LoginRequestDto;
-import jiohh.springlogin.dto.LoginResponseDto;
-import jiohh.springlogin.dto.SignUpRequestDto;
-import jiohh.springlogin.service.UserService;
+import jiohh.springlogin.user.dto.LoginRequestDto;
+import jiohh.springlogin.user.dto.LoginResponseDto;
+import jiohh.springlogin.user.dto.SignUpRequestDto;
+import jiohh.springlogin.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;

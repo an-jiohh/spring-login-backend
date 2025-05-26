@@ -1,4 +1,4 @@
-package jiohh.springlogin.model;
+package jiohh.springlogin.user.model;
 
 import jakarta.persistence.*;
 import lombok.Builder;

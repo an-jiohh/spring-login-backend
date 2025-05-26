@@ -1,6 +1,6 @@
-package jiohh.springlogin.dto;
+package jiohh.springlogin.user.dto;
 
-import jiohh.springlogin.model.Role;
+import jiohh.springlogin.user.model.Role;
 
 public class LoginResponseDto {
     private String userId;

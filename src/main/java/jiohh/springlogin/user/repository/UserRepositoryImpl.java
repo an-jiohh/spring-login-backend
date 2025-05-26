@@ -1,9 +1,9 @@
-package jiohh.springlogin.repository;
+package jiohh.springlogin.user.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import jiohh.springlogin.model.User;
+import jiohh.springlogin.user.model.User;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

@@ -1,11 +1,11 @@
-package jiohh.springlogin.service;
+package jiohh.springlogin.user.service;
 
-import jiohh.springlogin.dto.LoginRequestDto;
-import jiohh.springlogin.dto.LoginResponseDto;
-import jiohh.springlogin.dto.SignUpRequestDto;
-import jiohh.springlogin.model.Role;
-import jiohh.springlogin.model.User;
-import jiohh.springlogin.repository.UserRepository;
+import jiohh.springlogin.user.dto.LoginRequestDto;
+import jiohh.springlogin.user.dto.LoginResponseDto;
+import jiohh.springlogin.user.dto.SignUpRequestDto;
+import jiohh.springlogin.user.model.Role;
+import jiohh.springlogin.user.model.User;
+import jiohh.springlogin.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

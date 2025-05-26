@@ -1,4 +1,4 @@
-package jiohh.springlogin.dto;
+package jiohh.springlogin.user.dto;
 
 public class SignUpRequestDto {
 

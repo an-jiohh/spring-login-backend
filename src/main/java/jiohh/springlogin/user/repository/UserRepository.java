@@ -1,7 +1,7 @@
-package jiohh.springlogin.repository;
+package jiohh.springlogin.user.repository;
 
 
-import jiohh.springlogin.model.User;
+import jiohh.springlogin.user.model.User;
 
 import java.util.Optional;
 
