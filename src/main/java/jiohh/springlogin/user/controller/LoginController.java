@@ -1,9 +1,12 @@
 package jiohh.springlogin.user.controller;
 
 import jakarta.servlet.http.HttpSession;
-import jiohh.springlogin.user.dto.LoginRequestDto;
-import jiohh.springlogin.user.dto.LoginResponseDto;
-import jiohh.springlogin.user.dto.SignUpRequestDto;
+import jiohh.springlogin.response.ApiResponseDto;
+import jiohh.springlogin.user.dto.*;
+import jiohh.springlogin.user.exception.InvalidCredentialsException;
+import jiohh.springlogin.user.exception.SessionExpiredException;
+import jiohh.springlogin.user.exception.SessionInvalidationException;
+import jiohh.springlogin.user.model.Role;
 import jiohh.springlogin.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -20,8 +24,9 @@ public class LoginController {
 
     private final UserService userService;
 
+//    TODO : session -> request.getSession(true);로 변경
     @PostMapping("login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto,
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto,
                         HttpSession session) {
         Optional<LoginResponseDto> loginResult = userService.login(loginRequestDto);
         if (loginResult.isPresent()) {
@@ -30,27 +35,43 @@ public class LoginController {
             session.setAttribute("role", dto.getRole());
             session.setAttribute("name", dto.getName());
             session.setMaxInactiveInterval(60 * 30);
-            return ResponseEntity.ok(new LoginResponseDto(dto.getUserId(), dto.getName(), dto.getRole()));
+            LoginResponseDto response = LoginResponseDto.builder().userId(dto.getUserId()).name(dto.getName()).role(dto.getRole()).build();
+            return ResponseEntity.ok(ApiResponseDto.success(response));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new InvalidCredentialsException();
         }
     }
 
     @PostMapping("/signup")
-    public String registerUser(@RequestBody SignUpRequestDto signUpRequestDto,
-                               HttpSession session) {
+    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody SignUpRequestDto signUpRequestDto,
+                                                                HttpSession session) {
         log.info("Signup request: {}", signUpRequestDto);
-        try{
-            userService.registerUser(signUpRequestDto);
-            return "redirect:/";
-        } catch (IllegalArgumentException e) {
-            return "signup";
-        }
+        userService.registerUser(signUpRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponseDto.successWithNoData());
     }
 
-    @GetMapping("/session-check")
-    public ResponseEntity<?> checkSession(HttpSession session) {
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponseDto> logout(HttpSession session){
+        try{
+            session.invalidate();
+        } catch (IllegalStateException e) {
+            throw new SessionInvalidationException();
+        }
+        return ResponseEntity.ok().body(new LogoutResponseDto("success"));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(HttpSession session) {
         String userId = (String) session.getAttribute("userId");
-        return ResponseEntity.ok("현재 세션 userId: " + userId);
+        String name = (String) session.getAttribute("name");
+        Role role = (Role) session.getAttribute("role");
+
+        if (userId == null || name == null || role == null) {
+            throw new SessionExpiredException();
+        }
+
+        SessionCheckResponseDto response = SessionCheckResponseDto.builder().userId(userId).name(name).role(role).build();
+
+        return ResponseEntity.ok().body(ApiResponseDto.success(response));
     }
 }

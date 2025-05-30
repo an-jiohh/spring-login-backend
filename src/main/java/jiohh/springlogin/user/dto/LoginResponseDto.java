@@ -1,7 +1,9 @@
 package jiohh.springlogin.user.dto;
 
 import jiohh.springlogin.user.model.Role;
+import lombok.Builder;
 
+@Builder
 public class LoginResponseDto {
     private String userId;
     private String name;

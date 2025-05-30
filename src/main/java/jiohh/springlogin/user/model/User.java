@@ -1,7 +1,11 @@
 package jiohh.springlogin.user.model;
 
 import jakarta.persistence.*;
+import jiohh.springlogin.memo.model.Memo;
 import lombok.Builder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -12,12 +16,20 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 50)
     private String userId;
+    @Column(nullable = false, length = 50)
     private String password;
+    @Column(nullable = false, length = 50)
     private String name;
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+//    단방향으로 사용하기 위해 제거
+//    TODO JPQL으로 MEMO 조회
+//    @OneToMany(mappedBy = "user")
+//    private List<Memo> memos = new ArrayList<>();
 
     public User() {
     }

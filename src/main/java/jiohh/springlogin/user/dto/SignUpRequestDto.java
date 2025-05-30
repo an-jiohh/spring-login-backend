@@ -1,5 +1,9 @@
 package jiohh.springlogin.user.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+
+@Builder
 public class SignUpRequestDto {
 
     private String userId;

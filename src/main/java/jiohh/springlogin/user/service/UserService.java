@@ -3,6 +3,7 @@ package jiohh.springlogin.user.service;
 import jiohh.springlogin.user.dto.LoginRequestDto;
 import jiohh.springlogin.user.dto.LoginResponseDto;
 import jiohh.springlogin.user.dto.SignUpRequestDto;
+import jiohh.springlogin.user.exception.DuplicateUserIdException;
 import jiohh.springlogin.user.model.Role;
 import jiohh.springlogin.user.model.User;
 import jiohh.springlogin.user.repository.UserRepository;
@@ -36,7 +37,7 @@ public class UserService {
     @Transactional
     public void registerUser(SignUpRequestDto signUpRequestDto) {
         if(userRepository.findByUserId(signUpRequestDto.getUserId()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
+            throw new DuplicateUserIdException("이미 존재하는 아이디입니다.");
         }
         User user = User.builder()
                         .userId(signUpRequestDto.getUserId())

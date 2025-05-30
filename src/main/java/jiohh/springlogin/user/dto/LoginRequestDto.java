@@ -1,7 +1,9 @@
 package jiohh.springlogin.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 
+@Builder
 public class LoginRequestDto {
 
     @NotBlank(message = "아이디는 필수입니다.")
