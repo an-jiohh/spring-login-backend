@@ -49,9 +49,9 @@
   {
     "status": "success",
     "data": {
-      "id": "number",
+      "userId": "string",
       "email": "string",
-      "name": "string"
+      "role": "string"
     }
   }
   ```
@@ -94,9 +94,9 @@
   {
     "status": "success",
     "data": {
-      "id": "number",
-      "email": "string",
-      "name": "string"
+      "userId": "number",
+      "name": "string",
+      "role": "string"
     }
   }
   ```
@@ -126,12 +126,7 @@
 - **성공 응답** (201 Created):
   ```json
   {
-    "status": "success",
-    "data": {
-      "id": "number",
-      "email": "string",
-      "name": "string"
-    }
+    "status": "success"
   }
   ```
 - **실패 응답** (400 Bad Request):
