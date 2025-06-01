@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class ErrorResponseDTO {
-    private String status;
+    private String status = "error";
     private String code;
     private String message;
 

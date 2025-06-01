@@ -42,6 +42,7 @@ public class LoginController {
         }
     }
 
+//    TODO : @SessionAttribute로 개선
     @PostMapping("/signup")
     public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody SignUpRequestDto signUpRequestDto,
                                                                 HttpSession session) {
