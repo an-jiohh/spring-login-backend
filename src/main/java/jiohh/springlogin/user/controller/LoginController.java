@@ -1,5 +1,6 @@
 package jiohh.springlogin.user.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jiohh.springlogin.response.ApiResponseDto;
@@ -25,25 +26,18 @@ public class LoginController {
 
     private final UserService userService;
 
-//    TODO : session -> request.getSession(true);로 변경
     @PostMapping("login")
-    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto,
-                        HttpSession session) {
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto, HttpServletRequest request) {
         Optional<LoginResponseDto> loginResult = userService.login(loginRequestDto);
         if (loginResult.isPresent()) {
-            LoginResponseDto dto = loginResult.get();
-            session.setAttribute("userId", dto.getUserId());
-            session.setAttribute("role", dto.getRole());
-            session.setAttribute("name", dto.getName());
-            session.setMaxInactiveInterval(60 * 30);
-            LoginResponseDto response = LoginResponseDto.builder().userId(dto.getUserId()).name(dto.getName()).role(dto.getRole()).build();
-            return ResponseEntity.ok(ApiResponseDto.success(response));
+            LoginResponseDto loginUser = loginResult.get();
+            request.getSession().setAttribute("loginUser", loginUser);
+            return ResponseEntity.ok(ApiResponseDto.success(loginUser));
         } else {
             throw new InvalidCredentialsException();
         }
     }
 
-//    TODO : @SessionAttribute로 개선
     @PostMapping("/signup")
     public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody @Valid SignUpRequestDto signUpRequestDto,
                                                                 HttpSession session) {
@@ -64,15 +58,13 @@ public class LoginController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(HttpSession session) {
-        String userId = (String) session.getAttribute("userId");
-        String name = (String) session.getAttribute("name");
-        Role role = (Role) session.getAttribute("role");
+        LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
 
-        if (userId == null || name == null || role == null) {
+        if (loginUser == null) {
             throw new SessionExpiredException();
         }
 
-        SessionCheckResponseDto response = SessionCheckResponseDto.builder().userId(userId).name(name).role(role).build();
+        SessionCheckResponseDto response = SessionCheckResponseDto.builder().userId(loginUser.getUserId()).name(loginUser.getName()).role(loginUser.getRole()).build();
 
         return ResponseEntity.ok().body(ApiResponseDto.success(response));
     }
