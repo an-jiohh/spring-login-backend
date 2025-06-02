@@ -1,6 +1,7 @@
 package jiohh.springlogin.user.controller;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import jiohh.springlogin.response.ApiResponseDto;
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.InvalidCredentialsException;
@@ -26,7 +27,7 @@ public class LoginController {
 
 //    TODO : session -> request.getSession(true);로 변경
     @PostMapping("login")
-    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto,
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto,
                         HttpSession session) {
         Optional<LoginResponseDto> loginResult = userService.login(loginRequestDto);
         if (loginResult.isPresent()) {
@@ -44,7 +45,7 @@ public class LoginController {
 
 //    TODO : @SessionAttribute로 개선
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody SignUpRequestDto signUpRequestDto,
+    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody @Valid SignUpRequestDto signUpRequestDto,
                                                                 HttpSession session) {
         log.info("Signup request: {}", signUpRequestDto);
         userService.registerUser(signUpRequestDto);
