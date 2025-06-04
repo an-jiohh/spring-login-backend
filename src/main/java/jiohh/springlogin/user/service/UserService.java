@@ -2,6 +2,7 @@ package jiohh.springlogin.user.service;
 
 import jiohh.springlogin.user.dto.LoginRequestDto;
 import jiohh.springlogin.user.dto.LoginResponseDto;
+import jiohh.springlogin.user.dto.LoginSessionDto;
 import jiohh.springlogin.user.dto.SignUpRequestDto;
 import jiohh.springlogin.user.exception.DuplicateUserIdException;
 import jiohh.springlogin.user.model.Role;
@@ -21,13 +22,17 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public Optional<LoginResponseDto> login(LoginRequestDto loginRequestDto) {
+    public Optional<LoginSessionDto> login(LoginRequestDto loginRequestDto) {
         Optional<User> userOptional = userRepository.findByUserId(loginRequestDto.getUserId());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            log.info("User logged in: {}", user);
             if (user.getPassword().equals(loginRequestDto.getPassword())) {
-                LoginResponseDto dto = new LoginResponseDto(user.getUserId(), user.getName(), user.getRole());
+                LoginSessionDto dto = LoginSessionDto.builder()
+                        .id(user.getId())
+                        .userId(user.getUserId())
+                        .name(user.getName())
+                        .role(user.getRole())
+                        .build();
                 return Optional.of(dto);
             }
         }

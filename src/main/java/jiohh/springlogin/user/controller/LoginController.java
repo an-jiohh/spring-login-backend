@@ -28,11 +28,16 @@ public class LoginController {
 
     @PostMapping("login")
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto, HttpServletRequest request) {
-        Optional<LoginResponseDto> loginResult = userService.login(loginRequestDto);
+        Optional<LoginSessionDto> loginResult = userService.login(loginRequestDto);
         if (loginResult.isPresent()) {
-            LoginResponseDto loginUser = loginResult.get();
+            LoginSessionDto loginUser = loginResult.get();
             request.getSession().setAttribute("loginUser", loginUser);
-            return ResponseEntity.ok(ApiResponseDto.success(loginUser));
+            LoginResponseDto responseDto = LoginResponseDto.builder()
+                    .userId(loginUser.getUserId())
+                    .name(loginUser.getName())
+                    .role(loginUser.getRole())
+                    .build();
+            return ResponseEntity.ok(ApiResponseDto.success(responseDto));
         } else {
             throw new InvalidCredentialsException();
         }
@@ -58,7 +63,7 @@ public class LoginController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(HttpSession session) {
-        LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
+        LoginSessionDto loginUser = (LoginSessionDto) session.getAttribute("loginUser");
 
         if (loginUser == null) {
             throw new SessionExpiredException();
