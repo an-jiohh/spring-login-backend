@@ -27,6 +27,18 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findById(long id){
+        String jpql = "SELECT u From User u WHERE u.id = :id";
+        TypedQuery<User> query = em.createQuery(jpql, User.class);
+        query.setParameter("id", id);
+        try{
+            return Optional.of(query.getSingleResult());
+        } catch (Exception e){
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public void save(User user) {
         em.persist(user);
     }
