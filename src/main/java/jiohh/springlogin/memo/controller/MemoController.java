@@ -1,6 +1,7 @@
 package jiohh.springlogin.memo.controller;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import jiohh.springlogin.memo.dto.MemoCreateRequestDto;
 import jiohh.springlogin.memo.dto.MemoResponseDto;
 import jiohh.springlogin.memo.model.Memo;
@@ -28,7 +29,7 @@ public class MemoController {
     }
 
     @PostMapping("/memos")
-    public ResponseEntity<ApiResponseDto<MemoResponseDto>> createMemo(@RequestBody MemoCreateRequestDto memoCreate, HttpSession session) {
+    public ResponseEntity<ApiResponseDto<MemoResponseDto>> createMemo(@RequestBody @Valid MemoCreateRequestDto memoCreate, HttpSession session) {
         LoginSessionDto loginUser = (LoginSessionDto) session.getAttribute("loginUser");
         MemoResponseDto saved_memo = memoService.create(loginUser.getId(), memoCreate.getContent());
         return ResponseEntity.ok().body(ApiResponseDto.success(saved_memo));

@@ -18,6 +18,9 @@ public class SessionInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (request.getMethod().equals("OPTIONS")) {
+            return true;
+        }
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("loginUser") == null){
             ErrorResponseDTO error = ErrorResponseDTO.builder().status("error").code("UNAUTHORIZED").message("로그인이 필요합니다.").build();

@@ -61,7 +61,7 @@ public class LoginExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         String errorMessage = e.getBindingResult().getFieldErrors().stream()
-                .map(fieldError -> fieldError.getField() + ":" + fieldError.getDefaultMessage())
+                .map(fieldError -> fieldError.getDefaultMessage())
                 .findFirst().orElse("잘못된 요청입니다.");
         ErrorResponseDTO error = ErrorResponseDTO.builder()
                 .code("BAD_REQUEST")
