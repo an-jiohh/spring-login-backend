@@ -18,7 +18,7 @@ public class User {
 
     @Column(nullable = false, length = 50)
     private String userId;
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 255)
     private String password;
     @Column(nullable = false, length = 50)
     private String name;
@@ -26,10 +26,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-//    단방향으로 사용하기 위해 제거
-//    TODO JPQL으로 MEMO 조회
-//    @OneToMany(mappedBy = "user")
-//    private List<Memo> memos = new ArrayList<>();
 
     public User() {
     }

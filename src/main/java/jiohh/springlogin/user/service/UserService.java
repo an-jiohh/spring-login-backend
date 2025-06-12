@@ -8,6 +8,8 @@ import jiohh.springlogin.user.exception.DuplicateUserIdException;
 import jiohh.springlogin.user.model.Role;
 import jiohh.springlogin.user.model.User;
 import jiohh.springlogin.user.repository.UserRepository;
+import jiohh.springlogin.user.util.HashUtil;
+import jiohh.springlogin.user.util.SaltUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +28,11 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUserId(loginRequestDto.getUserId());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            if (user.getPassword().equals(loginRequestDto.getPassword())) {
+            String[] parts = user.getPassword().split("\\$");
+            String salt = parts[0];
+            String storedHash = parts[1];
+            String hash = HashUtil.sha256(salt + loginRequestDto.getPassword());
+            if (storedHash.equals(hash)) {
                 LoginSessionDto dto = LoginSessionDto.builder()
                         .id(user.getId())
                         .userId(user.getUserId())
@@ -44,9 +50,14 @@ public class UserService {
         if(userRepository.findByUserId(signUpRequestDto.getUserId()).isPresent()) {
             throw new DuplicateUserIdException("이미 존재하는 아이디입니다.");
         }
+        String salt = SaltUtil.generateSalt();
+        String password = signUpRequestDto.getPassword();
+        String hash = HashUtil.sha256(salt + password);
+        String encodedPassword = salt + "$" + hash;
+
         User user = User.builder()
                         .userId(signUpRequestDto.getUserId())
-                .password((signUpRequestDto.getPassword()))
+                .password(encodedPassword)
                 .name(signUpRequestDto.getName())
                 .role(Role.USER)
                 .build();
