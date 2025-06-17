@@ -1,5 +1,6 @@
 package jiohh.springlogin.config;
 
+import jiohh.springlogin.config.interceptor.JwtInterceptor;
 import jiohh.springlogin.config.interceptor.LogInterceptor;
 import jiohh.springlogin.config.interceptor.SessionInterceptor;
 import org.springframework.context.annotation.Configuration;
@@ -11,11 +12,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final LogInterceptor logInterceptor;
-    private final SessionInterceptor sessionInterceptor;
+    private final JwtInterceptor jwtInterceptor;
 
-    public WebConfig(LogInterceptor logInterceptor, SessionInterceptor sessionInterceptor) {
+    public WebConfig(LogInterceptor logInterceptor, JwtInterceptor jwtInterceptor) {
         this.logInterceptor = logInterceptor;
-        this.sessionInterceptor = sessionInterceptor;
+        this.jwtInterceptor = jwtInterceptor;
     }
 
     @Override
@@ -24,7 +25,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns("/css/**", "/*.ico", "/error");
 
-        registry.addInterceptor(sessionInterceptor)
+        registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/api/**", "/me", "/logout")
                 .excludePathPatterns("/login", "/signup");
     }
