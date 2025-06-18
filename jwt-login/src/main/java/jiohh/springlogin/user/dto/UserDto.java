@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class LoginSessionDto {
+public class UserDto {
     private Long id;
     private String userId;
     private String name;

@@ -1,5 +1,8 @@
 package jiohh.springlogin.user.util;
 
+import jiohh.springlogin.user.dto.JwtPayloadDto;
+import jiohh.springlogin.user.dto.UserDto;
+import jiohh.springlogin.user.model.Role;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,17 +23,23 @@ import static org.junit.jupiter.api.Assertions.*;
 class JwtUtilImplTest {
 
     private JwtUtil jwtUtil;
-    private String userId = "123";
+    private JwtPayloadDto loginUser;
 
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtilImpl("test-secret-key", 60L, 60L);
+        loginUser = JwtPayloadDto.builder()
+                .sub(100L)
+                .role(Role.USER)
+                .name("test-user")
+                .userId("test-user-login-id")
+                .build();
     }
 
     @Test
     @DisplayName("AccessToken 생성")
     void testGenerateAccessToken() {
-        String accessToken = jwtUtil.createAccessToken(userId);
+        String accessToken = jwtUtil.createAccessToken(loginUser);
         Assertions.assertThat(accessToken).isNotNull();
         log.info("access token: {}", accessToken);
     }
@@ -46,7 +55,7 @@ class JwtUtilImplTest {
     @Test
     @DisplayName("validate 성공")
     void testSuccessValidateToken() {
-        String accessToken = jwtUtil.createAccessToken(userId);
+        String accessToken = jwtUtil.createAccessToken(loginUser);
         boolean check = jwtUtil.validationToken(accessToken);
         Assertions.assertThat(check).isTrue();
     }
@@ -54,7 +63,7 @@ class JwtUtilImplTest {
     @Test
     @DisplayName("validate 실패 - 변조된 토큰")
     void testFailValidateToken() {
-        String accessToken = jwtUtil.createAccessToken(userId);
+        String accessToken = jwtUtil.createAccessToken(loginUser);
         String[] splitToken = accessToken.split("\\.");
         String failToken = splitToken[0] + "." + splitToken[1] + "." + "invalid";
         boolean check = jwtUtil.validationToken(failToken);
@@ -65,7 +74,7 @@ class JwtUtilImplTest {
     @DisplayName("validate 실패 - 토큰 시간 초과")
     void testTimeLimitFailValidateToken() {
         JwtUtilImpl jwtTestUtil = new JwtUtilImpl("test-secret", -1000, -1);
-        String accessToken = jwtTestUtil.createAccessToken(userId);
+        String accessToken = jwtTestUtil.createAccessToken(loginUser);
         boolean check = jwtTestUtil.validationToken(accessToken);
         Assertions.assertThat(check).isFalse();
     }
@@ -74,9 +83,10 @@ class JwtUtilImplTest {
     @Test
     @DisplayName("Payload 정보 가져오기 - sub")
     void testGetSubject(){
-        String accessToken = jwtUtil.createAccessToken(userId);
-        String subject = jwtUtil.getSubject(accessToken);
-        Assertions.assertThat(subject).isEqualTo(userId);
+        String accessToken = jwtUtil.createAccessToken(loginUser);
+        Long subject = jwtUtil.getSubject(accessToken);
+
+        Assertions.assertThat(subject).isEqualTo(loginUser.getSub());
 
         String refreshToken = jwtUtil.createRefreshToken();
         subject = jwtUtil.getSubject(refreshToken);
@@ -86,10 +96,19 @@ class JwtUtilImplTest {
     @Test
     @DisplayName("Payload 정보 가져오기 - claims 전체")
     void testGetClaims(){
-        String accessToken = jwtUtil.createAccessToken(userId);
+        String accessToken = jwtUtil.createAccessToken(loginUser);
         Map<String, Object> claims = jwtUtil.getClaims(accessToken);
-        String user = (String) claims.get("sub");
-        Assertions.assertThat(user).isEqualTo(userId);
+        Number user = (Number) claims.get("sub");
+        Assertions.assertThat(user.longValue()).isEqualTo(loginUser.getSub());
+    }
+
+    @Test
+    @DisplayName("Payload 정보 가져오기 - JwtPayloadDto 객체")
+    void testGetJwtPayloadDto(){
+        String accessToken = jwtUtil.createAccessToken(loginUser);
+        JwtPayloadDto checkUser = jwtUtil.getUser(accessToken);
+//        iat, exp 값 때문에 id 값으로 비교
+        Assertions.assertThat(checkUser.getUserId()).isEqualTo(loginUser.getUserId());
     }
 
 }

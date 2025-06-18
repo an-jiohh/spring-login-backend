@@ -1,15 +1,18 @@
 package jiohh.springlogin.user.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jiohh.springlogin.user.dto.JwtPayloadDto;
+import jiohh.springlogin.user.dto.UserDto;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 public interface JwtUtil {
-    public String createAccessToken(String userId);
+    public String createAccessToken(JwtPayloadDto userDto);
     public String createRefreshToken();
     public boolean validationToken(String token);
-    public String getSubject(String token);
+    public Long getSubject(String token);
     public Map<String, Object> getClaims(String token);
+    public JwtPayloadDto getUser(String token);
 }

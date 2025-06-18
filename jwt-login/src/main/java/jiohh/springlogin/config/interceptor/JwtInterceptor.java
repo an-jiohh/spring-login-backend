@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jiohh.springlogin.error.model.ErrorResponseDTO;
+import jiohh.springlogin.user.dto.JwtPayloadDto;
 import jiohh.springlogin.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -44,8 +45,8 @@ public class JwtInterceptor implements HandlerInterceptor {
             response.getWriter().print(errorJson);
             return false;
         }
-        String userId = jwtUtil.getSubject(accessToken);
-        request.setAttribute("userId", userId);
+        JwtPayloadDto user = jwtUtil.getUser(accessToken);
+        request.setAttribute("user", user);
         return true;
     }
 }

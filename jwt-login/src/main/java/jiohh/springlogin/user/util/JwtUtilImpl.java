@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jiohh.springlogin.user.dto.JwtPayloadDto;
+import jiohh.springlogin.user.dto.UserDto;
+import jiohh.springlogin.user.model.Role;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -43,8 +46,8 @@ public class JwtUtilImpl implements JwtUtil {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public String createAccessToken(String userId) {
-        return generateToken(userId, accessTokenValiditySeconds);
+    public String createAccessToken(JwtPayloadDto user) {
+        return generateToken(user, accessTokenValiditySeconds);
     }
 
     @Override
@@ -52,14 +55,19 @@ public class JwtUtilImpl implements JwtUtil {
         return generateToken(null, refreshTokenValiditySeconds);
     }
 
-    private String generateToken(String subject, long expiresIn) {
+    private String generateToken(JwtPayloadDto dto, long expiresIn) {
         long now = System.currentTimeMillis();
         long exp = now + expiresIn;
         Map<String, Object> header = new HashMap<>();
         header.put("typ", "JWT");
         header.put("alg", "HS256");
         Map<String, Object> payload = new HashMap<>();
-        if (subject != null) {payload.put("sub", subject);}
+        if (dto != null) {
+            payload.put("sub", dto.getSub());
+            payload.put("userId", dto.getUserId());
+            payload.put("name", dto.getName());
+            payload.put("role", dto.getRole());
+        }
         payload.put("iat", now / 1000);
         payload.put("exp", exp / 1000);
 
@@ -126,14 +134,22 @@ public class JwtUtilImpl implements JwtUtil {
     }
 
     @Override
-    public String getSubject(String token) {
+    public Long getSubject(String token) {
         try{
             String[] split = token.split("\\.");
             String payload = split[1];
             String decodedToken = decodeToken(payload);
             Map<String, Object> payloadObject = objectMapper.readValue(decodedToken, new TypeReference<Map<String, Object>>() {
             });
-            return (String) payloadObject.get("sub");
+            Object sub = payloadObject.get("sub");
+            if (sub == null) { return null;}
+            if (sub instanceof Number){
+                return ((Number) sub).longValue();
+            } else if (sub instanceof String){
+                return Long.parseLong((String) sub);
+            } else {
+                throw new IllegalArgumentException("sub 값이 잘못되었습니다.");
+            }
         } catch (JsonProcessingException e) {
 //            TODO : 커스텀 exception 처리
             throw new RuntimeException(e);
@@ -151,6 +167,17 @@ public class JwtUtilImpl implements JwtUtil {
             //            TODO : 커스텀 exception 처리
             throw new RuntimeException(e);
         }
+    }
 
+    @Override
+    public JwtPayloadDto getUser(String token) {
+        try{
+            String[] split = token.split("\\.");
+            String payload = split[1];
+            String decodedToken = decodeToken(payload);
+            return objectMapper.readValue(decodedToken, JwtPayloadDto.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
