@@ -61,6 +61,7 @@ public class LoginExceptionHandler {
                 .map(fieldError -> fieldError.getDefaultMessage())
                 .findFirst().orElse("잘못된 요청입니다.");
         ErrorResponseDTO error = ErrorResponseDTO.builder()
+                .status("error")
                 .code("BAD_REQUEST")
                 .message(errorMessage)
                 .build();
@@ -70,6 +71,7 @@ public class LoginExceptionHandler {
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ResponseEntity<ErrorResponseDTO> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
         ErrorResponseDTO error = ErrorResponseDTO.builder()
+                .status("error")
                 .message("Refresh Token이 유효하지 않거나 만료되었습니다.")
                 .code("INVALID_TOKEN")
                 .build();
