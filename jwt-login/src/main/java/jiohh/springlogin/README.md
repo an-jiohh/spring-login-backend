@@ -125,7 +125,8 @@
   {
     "status": "success",
     "data": {
-      "userId": "number",
+      "id": "Long",
+      "userId": "string",
       "name": "string",
       "role": "string"
     }
@@ -136,7 +137,7 @@
   {
     "status": "error",
     "code": "SESSION_EXPIRED",
-    "message": "세션이 만료되었습니다"
+    "message": "토큰이 만료되었습니다"
   }
   ```
 - **특이사항**:

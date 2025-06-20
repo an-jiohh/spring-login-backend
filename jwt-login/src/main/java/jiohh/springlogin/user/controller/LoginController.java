@@ -1,16 +1,13 @@
 package jiohh.springlogin.user.controller;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import jiohh.springlogin.resolver.LoginUser;
 import jiohh.springlogin.response.ApiResponseDto;
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.InvalidCredentialsException;
 import jiohh.springlogin.user.exception.InvalidRefreshTokenException;
-import jiohh.springlogin.user.exception.SessionExpiredException;
-import jiohh.springlogin.user.exception.SessionInvalidationException;
 import jiohh.springlogin.user.service.UserService;
 import jiohh.springlogin.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -101,14 +98,13 @@ public class LoginController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(HttpSession session) {
-        UserDto loginUser = (UserDto) session.getAttribute("loginUser");
-
-        if (loginUser == null) {
-            throw new SessionExpiredException();
-        }
-
-        SessionCheckResponseDto response = SessionCheckResponseDto.builder().userId(loginUser.getUserId()).name(loginUser.getName()).role(loginUser.getRole()).build();
+    public ResponseEntity<ApiResponseDto<UserCheckResponseDto>> checkUserInfo(@LoginUser UserDto user) {
+        UserCheckResponseDto response = UserCheckResponseDto.builder()
+                .id(user.getId())
+                .userId(user.getUserId())
+                .name(user.getName())
+                .role(user.getRole())
+                .build();
 
         return ResponseEntity.ok().body(ApiResponseDto.success(response));
     }

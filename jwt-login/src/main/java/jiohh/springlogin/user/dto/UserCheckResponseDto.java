@@ -6,15 +6,17 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class SessionCheckResponseDto {
+public class UserCheckResponseDto {
+    private Long id;
     private String userId;
     private String name;
     private Role role;
 
-    public SessionCheckResponseDto() {
+    public UserCheckResponseDto() {
     }
 
-    public SessionCheckResponseDto(String userId, String name, Role role) {
+    public UserCheckResponseDto(Long id, String userId, String name, Role role) {
+        this.id = id;
         this.userId = userId;
         this.name = name;
         this.role = role;
