@@ -18,18 +18,20 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @RequiredArgsConstructor
 public class JwtInterceptor implements HandlerInterceptor {
 
-    private ObjectMapper objectMapper;
-    private JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper;
+    private final JwtUtil jwtUtil;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String accessToken = request.getHeader("Authorization");
-        if (accessToken == null || accessToken.startsWith("Bearer ")) {
+        log.info("access token: {}", accessToken);
+        if (accessToken == null || !accessToken.startsWith("Bearer ")) {
             ErrorResponseDTO invalidAuthHeader = ErrorResponseDTO.builder()
+                    .status("error")
                     .code("INVALID_AUTH_HEADER")
                     .message("Authorization 헤더가 누락되었거나 Bearer 토큰 형식이 아닙니다.").build();
             String errorJson = objectMapper.writeValueAsString(invalidAuthHeader);
-            response.setContentType("application/json");
+            response.setContentType("application/json; charset=utf-8");
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.getWriter().print(errorJson);
             return false;
@@ -37,10 +39,11 @@ public class JwtInterceptor implements HandlerInterceptor {
         accessToken = accessToken.substring("Bearer ".length());
         if (!jwtUtil.validationToken(accessToken)){
             ErrorResponseDTO invalidAuthHeader = ErrorResponseDTO.builder()
+                    .status("error")
                     .code("INVALID_TOKEN")
                     .message("유효하지 않은 액세스 토큰입니다.").build();
             String errorJson = objectMapper.writeValueAsString(invalidAuthHeader);
-            response.setContentType("application/json");
+            response.setContentType("application/json; charset=utf-8");
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.getWriter().print(errorJson);
             return false;
