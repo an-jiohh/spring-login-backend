@@ -51,7 +51,8 @@
     "data": {
       "userId": "string",
       "email": "string",
-      "role": "string"
+      "role": "string",
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR..."
     }
   }
   ```

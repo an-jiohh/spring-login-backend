@@ -1,6 +1,8 @@
 package jiohh.springlogin.user.controller;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jiohh.springlogin.response.ApiResponseDto;
@@ -8,15 +10,14 @@ import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.InvalidCredentialsException;
 import jiohh.springlogin.user.exception.SessionExpiredException;
 import jiohh.springlogin.user.exception.SessionInvalidationException;
-import jiohh.springlogin.user.model.Role;
 import jiohh.springlogin.user.service.UserService;
+import jiohh.springlogin.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -25,17 +26,27 @@ import java.util.Optional;
 public class LoginController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("login")
-    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto, HttpServletRequest request) {
-        Optional<LoginSessionDto> loginResult = userService.login(loginRequestDto);
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto, HttpServletResponse response) {
+        Optional<UserDto> loginResult = userService.login(loginRequestDto);
         if (loginResult.isPresent()) {
-            LoginSessionDto loginUser = loginResult.get();
-            request.getSession().setAttribute("loginUser", loginUser);
+            UserDto userDto = loginResult.get();
+
+            Cookie refreshTokenCookie = new Cookie("refreshToken", userDto.getRefreshToken());
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setSecure(true);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge((int) (jwtUtil.getRefreshTokenValiditySeconds() / 1000));
+            response.addCookie(refreshTokenCookie);
+
             LoginResponseDto responseDto = LoginResponseDto.builder()
-                    .userId(loginUser.getUserId())
-                    .name(loginUser.getName())
-                    .role(loginUser.getRole())
+                    .id(userDto.getId())
+                    .userId(userDto.getUserId())
+                    .role(userDto.getRole())
+                    .name(userDto.getName())
+                    .accessToken(userDto.getAccessToken())
                     .build();
             return ResponseEntity.ok(ApiResponseDto.success(responseDto));
         } else {
@@ -63,7 +74,7 @@ public class LoginController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(HttpSession session) {
-        LoginSessionDto loginUser = (LoginSessionDto) session.getAttribute("loginUser");
+        UserDto loginUser = (UserDto) session.getAttribute("loginUser");
 
         if (loginUser == null) {
             throw new SessionExpiredException();

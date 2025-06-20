@@ -1,6 +1,7 @@
 package jiohh.springlogin.user.dto;
 
 import jiohh.springlogin.user.model.Role;
+import jiohh.springlogin.user.model.User;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,5 +27,13 @@ public class JwtPayloadDto {
         this.iat = iat;
     }
 
+    public static JwtPayloadDto of(UserDto dto) {
+        return JwtPayloadDto.builder()
+                .sub(dto.getId())
+                .userId(dto.getUserId())
+                .name(dto.getName())
+                .role(dto.getRole())
+                .build();
+    }
 
 }
