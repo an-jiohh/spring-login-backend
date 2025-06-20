@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jiohh.springlogin.response.ApiResponseDto;
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.InvalidCredentialsException;
+import jiohh.springlogin.user.exception.InvalidRefreshTokenException;
 import jiohh.springlogin.user.exception.SessionExpiredException;
 import jiohh.springlogin.user.exception.SessionInvalidationException;
 import jiohh.springlogin.user.service.UserService;
@@ -56,6 +57,20 @@ public class LoginController {
         } else {
             throw new InvalidCredentialsException();
         }
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponseDto<ReissueResponseDto>> reissueAccessToken(@CookieValue("refreshToken") String refreshToken) {
+        if (refreshToken == null || !jwtUtil.validationToken(refreshToken)) {
+            throw new InvalidRefreshTokenException();
+        }
+        String reissueAccessToken = userService.reissueAccessToken(refreshToken);
+
+        ReissueResponseDto response = ReissueResponseDto.builder()
+                .accessToken(reissueAccessToken)
+                .build();
+
+        return ResponseEntity.ok(ApiResponseDto.success(response));
     }
 
     @PostMapping("/signup")

@@ -2,6 +2,7 @@ package jiohh.springlogin.user.service;
 
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.DuplicateUserIdException;
+import jiohh.springlogin.user.exception.InvalidRefreshTokenException;
 import jiohh.springlogin.user.model.RefreshToken;
 import jiohh.springlogin.user.model.Role;
 import jiohh.springlogin.user.model.User;
@@ -88,5 +89,34 @@ public class UserService {
                 .role(Role.USER)
                 .build();
         userRepository.save(user);
+    }
+
+    @Transactional
+    public String reissueAccessToken(String refreshToken) {
+        Optional<RefreshToken> boxedSavedToken = refreshTokenRepository.findByToken(refreshToken);
+        if (boxedSavedToken.isEmpty()){
+            throw new InvalidRefreshTokenException();
+        }
+        if (isTokenExpired(boxedSavedToken.get())) {
+            throw new InvalidRefreshTokenException();
+        }
+        RefreshToken savedToken = boxedSavedToken.get();
+        Optional<User> byId = userRepository.findById(savedToken.getUserId());
+        if (byId.isEmpty()){
+            throw new InvalidRefreshTokenException("토큰의 유저정보를 찾을 수 없습니다.");
+        }
+        User user = byId.get();
+        JwtPayloadDto dto = JwtPayloadDto.builder()
+                .sub(user.getId())
+                .userId(user.getUserId())
+                .name(user.getName())
+                .role(user.getRole())
+                .build();
+        String accessToken = jwtUtil.createAccessToken(dto);
+        return accessToken;
+    }
+
+    private Boolean isTokenExpired(RefreshToken token) {
+        return token.getExpiresIn() > System.currentTimeMillis();
     }
 }
