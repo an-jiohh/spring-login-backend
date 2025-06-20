@@ -15,6 +15,7 @@ import jiohh.springlogin.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,12 +35,15 @@ public class LoginController {
         if (loginResult.isPresent()) {
             UserDto userDto = loginResult.get();
 
-            Cookie refreshTokenCookie = new Cookie("refreshToken", userDto.getRefreshToken());
-            refreshTokenCookie.setHttpOnly(true);
-            refreshTokenCookie.setSecure(true);
-            refreshTokenCookie.setPath("/");
-            refreshTokenCookie.setMaxAge((int) (jwtUtil.getRefreshTokenValiditySeconds() / 1000));
-            response.addCookie(refreshTokenCookie);
+
+            ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", userDto.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge((int) (jwtUtil.getRefreshTokenValiditySeconds() / 1000))
+                    .build();
+            response.addHeader("Set-Cookie",refreshTokenCookie.toString());
 
             LoginResponseDto responseDto = LoginResponseDto.builder()
                     .id(userDto.getId())
