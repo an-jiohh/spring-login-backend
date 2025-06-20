@@ -1,7 +1,6 @@
 package jiohh.springlogin.user.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jiohh.springlogin.resolver.LoginUser;
 import jiohh.springlogin.response.ApiResponseDto;
@@ -71,9 +70,7 @@ public class LoginController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody @Valid SignUpRequestDto signUpRequestDto,
-                                                                HttpSession session) {
-        log.info("Signup request: {}", signUpRequestDto);
+    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody @Valid SignUpRequestDto signUpRequestDto) {
         userService.registerUser(signUpRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponseDto.successWithNoData());
     }
