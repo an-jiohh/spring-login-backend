@@ -82,12 +82,21 @@ public class LoginController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<LogoutResponseDto> logout(HttpSession session){
-        try{
-            session.invalidate();
-        } catch (IllegalStateException e) {
-            throw new SessionInvalidationException();
+    public ResponseEntity<LogoutResponseDto> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+        if (refreshToken == null){
+            throw new InvalidRefreshTokenException();
         }
+        userService.logout(refreshToken);
+
+        ResponseCookie responseCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader("Set-Cookie",responseCookie.toString());
+
         return ResponseEntity.ok().body(new LogoutResponseDto("success"));
     }
 

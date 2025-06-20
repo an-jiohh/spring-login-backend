@@ -119,4 +119,13 @@ public class UserService {
     private Boolean isTokenExpired(RefreshToken token) {
         return token.getExpiresIn() > System.currentTimeMillis();
     }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        Optional<RefreshToken> boxedSavedToken = refreshTokenRepository.findByToken(refreshToken);
+        if (boxedSavedToken.isPresent()){
+            RefreshToken savedToken = boxedSavedToken.get();
+            refreshTokenRepository.deleteByToken(savedToken);
+        }
+    }
 }
