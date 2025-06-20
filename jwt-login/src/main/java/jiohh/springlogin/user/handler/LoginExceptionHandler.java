@@ -2,10 +2,7 @@ package jiohh.springlogin.user.handler;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jiohh.springlogin.error.model.ErrorResponseDTO;
-import jiohh.springlogin.user.exception.DuplicateUserIdException;
-import jiohh.springlogin.user.exception.InvalidCredentialsException;
-import jiohh.springlogin.user.exception.SessionExpiredException;
-import jiohh.springlogin.user.exception.SessionInvalidationException;
+import jiohh.springlogin.user.exception.*;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -64,9 +61,20 @@ public class LoginExceptionHandler {
                 .map(fieldError -> fieldError.getDefaultMessage())
                 .findFirst().orElse("잘못된 요청입니다.");
         ErrorResponseDTO error = ErrorResponseDTO.builder()
+                .status("error")
                 .code("BAD_REQUEST")
                 .message(errorMessage)
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
+        ErrorResponseDTO error = ErrorResponseDTO.builder()
+                .status("error")
+                .message("Refresh Token이 유효하지 않거나 만료되었습니다.")
+                .code("INVALID_TOKEN")
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 }

@@ -77,4 +77,9 @@ public class User {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    public String getSalt() {
+        String[] split = password.split("\\$");
+        return split[0];
+    }
 }

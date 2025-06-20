@@ -6,9 +6,11 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class LoginSessionDto {
+public class UserDto {
     private Long id;
     private String userId;
     private String name;
     private Role role;
+    private String accessToken;
+    private String refreshToken;
 }
