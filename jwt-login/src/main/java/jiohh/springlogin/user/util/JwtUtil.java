@@ -15,4 +15,6 @@ public interface JwtUtil {
     public Long getSubject(String token);
     public Map<String, Object> getClaims(String token);
     public JwtPayloadDto getUser(String token);
+    public Long getRefreshTokenValiditySeconds();
+    public Long getAccessTokenValiditySeconds();
 }

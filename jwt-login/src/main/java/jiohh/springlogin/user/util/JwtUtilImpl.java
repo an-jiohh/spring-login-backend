@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jiohh.springlogin.user.dto.JwtPayloadDto;
 import jiohh.springlogin.user.dto.UserDto;
 import jiohh.springlogin.user.model.Role;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,14 @@ public class JwtUtilImpl implements JwtUtil {
     private final String secretKey;
     private final long accessTokenValiditySeconds;
     private final long refreshTokenValiditySeconds;
+
+    public Long getRefreshTokenValiditySeconds() {
+        return refreshTokenValiditySeconds;
+    }
+
+    public Long getAccessTokenValiditySeconds() {
+        return accessTokenValiditySeconds;
+    }
 
     public JwtUtilImpl(@Value("${jwt.secret}") String secretKey,
                        @Value("${jwt.accessTokenSeconds}") long accessTokenValiditySeconds,
