@@ -22,7 +22,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     }
 
     @Override
-    public Optional<RefreshToken> findByUserId(String userId) {
+    public Optional<RefreshToken> findByUserId(Long userId) {
         String sql = "SELECT rt FROM RefreshToken rt WHERE rt.userId = :userId";
         TypedQuery<RefreshToken> query = em.createQuery(sql, RefreshToken.class);
         query.setParameter("userId", userId);

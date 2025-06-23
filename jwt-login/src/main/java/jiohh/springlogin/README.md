@@ -56,7 +56,7 @@
     }
   }
   ```
-- **실패 응답** (401 Unauthorized):
+- **실패 응답** (400 BAD REQUEST):
   ```json
   {
     "status": "error",

@@ -22,7 +22,7 @@ public class LoginExceptionHandler {
                 .code("INVALID_CREDENTIALS")
                 .message(e.getMessage())
                 .build();
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(SessionInvalidationException.class)
