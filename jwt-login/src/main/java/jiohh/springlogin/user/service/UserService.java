@@ -52,13 +52,7 @@ public class UserService {
         String accessToken = jwtUtil.createAccessToken(tokenDto);
         String refreshToken = jwtUtil.createRefreshToken();
 
-        RefreshToken refreshTokenObject = RefreshToken.builder()
-                .refreshToken(refreshToken)
-                .userId(user.getId())
-                .expiresIn(System.currentTimeMillis() + jwtUtil.getRefreshTokenValiditySeconds())
-                .build();
-
-        refreshTokenRepository.save(refreshTokenObject);
+        createRefreshToken(user.getId());
 
         UserDto response = UserDto.builder()
                 .id(user.getId())
@@ -70,6 +64,24 @@ public class UserService {
                 .build();
 
         return Optional.of(response);
+    }
+
+    private void createRefreshToken(Long userId) {
+        String refreshToken = jwtUtil.createRefreshToken();
+
+        Optional<RefreshToken> boxedRefreshToken = refreshTokenRepository.findByUserId(userId);
+        RefreshToken refreshTokenObject;
+        if (boxedRefreshToken.isPresent()) {
+            refreshTokenObject = boxedRefreshToken.get();
+            refreshTokenObject.updateRefreshToken(refreshToken);
+        } else {
+            refreshTokenObject = RefreshToken.builder()
+                    .refreshToken(refreshToken)
+                    .userId(userId)
+                    .expiresIn(System.currentTimeMillis() + jwtUtil.getRefreshTokenValiditySeconds())
+                    .build();
+        }
+        refreshTokenRepository.save(refreshTokenObject);
     }
 
     @Transactional
@@ -97,10 +109,11 @@ public class UserService {
         if (boxedSavedToken.isEmpty()){
             throw new InvalidRefreshTokenException();
         }
-        if (isTokenExpired(boxedSavedToken.get())) {
+        RefreshToken savedToken = boxedSavedToken.get();
+        if (isTokenExpired(savedToken)) {
             throw new InvalidRefreshTokenException();
         }
-        RefreshToken savedToken = boxedSavedToken.get();
+
         Optional<User> byId = userRepository.findById(savedToken.getUserId());
         if (byId.isEmpty()){
             throw new InvalidRefreshTokenException("토큰의 유저정보를 찾을 수 없습니다.");
@@ -117,7 +130,7 @@ public class UserService {
     }
 
     private Boolean isTokenExpired(RefreshToken token) {
-        return token.getExpiresIn() > System.currentTimeMillis();
+        return token.getExpiresIn() < System.currentTimeMillis();
     }
 
     @Transactional
