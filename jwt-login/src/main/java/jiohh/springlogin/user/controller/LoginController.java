@@ -56,7 +56,7 @@ public class LoginController {
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponseDto<ReissueResponseDto>> reissueAccessToken(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<ApiResponseDto<ReissueResponseDto>> reissueAccessToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
         if (refreshToken == null || !jwtUtil.validationToken(refreshToken)) {
             throw new InvalidRefreshTokenException();
         }
