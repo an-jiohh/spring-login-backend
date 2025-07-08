@@ -1,33 +1,14 @@
-# Spring 로그인 시스템 구현 리포지토리
+# Spring Jwt 로그인
 
 ## 📌 개요
 
-이 프로젝트는 Spring Boot를 사용하여 다양한 방식의 로그인 시스템을 구현하고 비교하는 학습용 프로젝트입니다.  
-다음과 같은 방식으로 로그인 기능을 구현합니다:
-
-1. 세션 기반 로그인
-2. JWT (JSON Web Token) 기반 로그인
-3. Spring Security 기반 로그인
-
-세션 기반, JWT 기반 로그인 구현을 진행 한 후 이를 Spring Security 마이그레이션하는 방식으로 진행하고자 합니다.
-
-
-여러 기술 중 로그인을 선택한 이유는 인증 및 인가는  거의 모든 서비스에서 필수적으로 요구되는 핵심 요소라고 생각하였으며
-로그인을 구현하는 과정에서 세션 또는 JWT 기반의 인증 방식, 보안 측면 고려사항 뿐만 아니라 DB설계, 예외처리 설계, 테스트 코드 작성등 전반적인 기술을 학습할 수 있을 것으로 생각하였기 때문입니다.
-   
-추가적으로, 로그인 방식의 성능 차이에 대한 의문을 가지고 있었습니다. 이러한 궁금증을 해결하기 위해 각 방식으로 구현해보고 부하 테스트도 진행할 예정입니다.
-
-## 화면 구성
-
-![Image](https://github.com/user-attachments/assets/b832c52e-c5c5-4892-9ef3-0b0592047bfd)
+JWT (JSON Web Token) 기반 로그인을 구현하는 프로젝트입니다.
 
 ## ⚙️ 기술 스택
 
 - **Backend**: Spring Boot
 - **Frontend**: React
 - **Database**: H2 (인메모리 DB)
-
-각 구현 방식은 보안 수준, 확장성, 사용성 측면에서 어떤 차이를 가지는지 실습을 통해 비교하고자 합니다.
 
 ---
 
@@ -36,30 +17,61 @@
 ### 공통
 - Spring Data JPA의 추상화 대신, EntityManager를 명시적으로 사용하여 데이터베이스 접근 로직을 구현
 
-### 세션 기반 로그인
-- 사용자의 로그인 상태를 `HttpSession`에 저장하여 인증 유지
-- 로그인 시 세션에 사용자 정보를 저장
-- 로그아웃 시 세션 제거
-
 ### JWT 기반 로그인
-- 로그인 시 JWT를 생성하여 클라이언트에게 전달
-- 클라이언트는 이후 요청 시 JWT를 헤더에 포함하여 서버에 전달
-- 서버는 JWT를 검증하여 인증 처리
+- 세션 방식으로 구현 완료, 세션 프로젝트를 기반으로 JWT으로 마이그레이션 진행
+- 로그인 성공 시 Access Token과 Refresh Token을 생성하여 클라이언트에 전달
+    - Access Token: 만료 시간이 짧고, Authorization 헤더를 통해 매 요청마다 포함됨
+    - Refresh Token: 만료 시간이 길며, HttpOnly 쿠키로 저장됨
+- 서버는 Refresh Token을 Redis 등에 저장하여 유효성 관리 및 탈취 시 폐기 가능하도록 구성
+- 클라이언트는 Access Token이 만료되었을 경우, Refresh Token을 이용해 Access Token 재발급 요청 수행
+- 로그아웃 시 서버에서 Refresh Token을 제거하여 재사용 방지
+- 보안 요소
+    - HTTPS 사용을 전제로 전송 중 탈취 방지
+    - Refresh Token은 HttpOnly + Secure 쿠키에 저장
+    - Access Token은 노출되어도 제한된 시간 동안만 사용 가능
+    - 서버 측 토큰 무효화 전략 적용 (토큰 로테이션 등)
 
-### Spring Security 기반 로그인
-- Spring Security의 인증/인가 필터 체인을 이용한 표준 보안 처리
-- 커스텀 로그인/회원가입 로직 적용
-- BCrypt를 이용한 비밀번호 암호화
+---
+
+## ⚙️ 마이그레이션 과정
+
+### 설계(Access + Refresh Token 기반)
+1. 로그인 시 서버에서 2개의 토큰 발급
+   - Access Token (예: 30분)
+   - Refresh Token (예: 7일)
+
+2. Access Token은 Authorization: Bearer <token>으로 API 요청 시 사용
+
+3. 만료되면 Refresh Token을 이용해 Access Token 재발급
+
+### 단계별 마이그레이션 진행
+
+1. JwtUtil 구현 (Access + Refresh 생성/검증)
+- 두 토큰의 만료 시간 다르게 설정
+- 비밀키 동일하게 사용 가능
+- 
+2. 로그인 성공 시 2개의 토큰 발급
+   (refreshToken은 HttpOnly 쿠키로 전달하는 것으로 고려)
+
+3. 클라이언트는 Authorization 헤더에 accessToken 실어서 API 호출
+
+4. 인증 필터(JwtAuthFilter)에서 Access Token 검증
+
+5. Access Token 만료 시 Refresh Token을 통해 재발급
+   - 요청: POST /auth/refresh  
+   - 검증: Refresh Token 유효성 + 사용자 정보 확인  
+   - 응답: 새로운 Access Token   
 
 ---
 
 
 ✅ TODO
-- [X] API 명세서 작성
-- [X] 프론트엔드 화면 구성
-- [X] 로그인 실패 및 예외 처리
-- [X] 세션 기반 로그인 구현  
-- [ ] JWT 기반 로그인 구현
-- [ ] Spring Security 적용
-- [ ] 테스트 코드 작성
-- [ ] 부하 테스트 (Load Testing) 진행 및 결과 정리
+- [X] API 명세서 개선
+- [X] JWT 기반 로그인 구현
+  - [X] JwtUtil 구현 (Access + Refresh 생성/검증)
+  - [X] 로그인 성공 시 2개의 토큰 발급
+  - [X] 클라이언트는 Authorization 헤더에 accessToken 실어서 API 호출
+  - [X] 인증 필터(JwtAuthFilter) 구현
+  - [X] Access Token 재발급 구현
+
+

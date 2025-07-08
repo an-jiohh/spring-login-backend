@@ -1,17 +1,19 @@
 package jiohh.springlogin.user.service;
 
-import jiohh.springlogin.user.dto.LoginRequestDto;
-import jiohh.springlogin.user.dto.LoginResponseDto;
-import jiohh.springlogin.user.dto.LoginSessionDto;
-import jiohh.springlogin.user.dto.SignUpRequestDto;
+import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.DuplicateUserIdException;
+import jiohh.springlogin.user.exception.InvalidRefreshTokenException;
+import jiohh.springlogin.user.model.RefreshToken;
 import jiohh.springlogin.user.model.Role;
 import jiohh.springlogin.user.model.User;
+import jiohh.springlogin.user.repository.RefreshTokenRepository;
 import jiohh.springlogin.user.repository.UserRepository;
 import jiohh.springlogin.user.util.HashUtil;
+import jiohh.springlogin.user.util.JwtUtil;
 import jiohh.springlogin.user.util.SaltUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,26 +25,63 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtUtil jwtUtil;
 
-    public Optional<LoginSessionDto> login(LoginRequestDto loginRequestDto) {
+    @Transactional
+    public Optional<UserDto> login(LoginRequestDto loginRequestDto) {
         Optional<User> userOptional = userRepository.findByUserId(loginRequestDto.getUserId());
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            String[] parts = user.getPassword().split("\\$");
-            String salt = parts[0];
-            String storedHash = parts[1];
-            String hash = HashUtil.sha256(salt + loginRequestDto.getPassword());
-            if (storedHash.equals(hash)) {
-                LoginSessionDto dto = LoginSessionDto.builder()
-                        .id(user.getId())
-                        .userId(user.getUserId())
-                        .name(user.getName())
-                        .role(user.getRole())
-                        .build();
-                return Optional.of(dto);
-            }
+        if (userOptional.isEmpty()){
+            return Optional.empty();
         }
-        return Optional.empty();
+        User user = userOptional.get();
+        String storedPassword = user.getPassword();
+        String salt = user.getSalt();
+        String hash = HashUtil.sha256(salt + loginRequestDto.getPassword());
+        if (!storedPassword.equals(salt + "$" + hash)) {
+            return Optional.empty();
+        }
+
+        JwtPayloadDto tokenDto = JwtPayloadDto.builder()
+                .sub(user.getId())
+                .userId(user.getUserId())
+                .name(user.getName())
+                .role(user.getRole())
+                .build();
+
+        String accessToken = jwtUtil.createAccessToken(tokenDto);
+        String refreshToken = jwtUtil.createRefreshToken();
+
+        createRefreshToken(user.getId());
+
+        UserDto response = UserDto.builder()
+                .id(user.getId())
+                .userId(user.getUserId())
+                .name(user.getName())
+                .role(user.getRole())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+
+        return Optional.of(response);
+    }
+
+    private void createRefreshToken(Long userId) {
+        String refreshToken = jwtUtil.createRefreshToken();
+
+        Optional<RefreshToken> boxedRefreshToken = refreshTokenRepository.findByUserId(userId);
+        RefreshToken refreshTokenObject;
+        if (boxedRefreshToken.isPresent()) {
+            refreshTokenObject = boxedRefreshToken.get();
+            refreshTokenObject.updateRefreshToken(refreshToken);
+        } else {
+            refreshTokenObject = RefreshToken.builder()
+                    .refreshToken(refreshToken)
+                    .userId(userId)
+                    .expiresIn(System.currentTimeMillis() + jwtUtil.getRefreshTokenValiditySeconds())
+                    .build();
+        }
+        refreshTokenRepository.save(refreshTokenObject);
     }
 
     @Transactional
@@ -62,5 +101,44 @@ public class UserService {
                 .role(Role.USER)
                 .build();
         userRepository.save(user);
+    }
+
+    @Transactional
+    public String reissueAccessToken(String refreshToken) {
+        Optional<RefreshToken> boxedSavedToken = refreshTokenRepository.findByToken(refreshToken);
+        if (boxedSavedToken.isEmpty()){
+            throw new InvalidRefreshTokenException();
+        }
+        RefreshToken savedToken = boxedSavedToken.get();
+        if (isTokenExpired(savedToken)) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        Optional<User> byId = userRepository.findById(savedToken.getUserId());
+        if (byId.isEmpty()){
+            throw new InvalidRefreshTokenException("토큰의 유저정보를 찾을 수 없습니다.");
+        }
+        User user = byId.get();
+        JwtPayloadDto dto = JwtPayloadDto.builder()
+                .sub(user.getId())
+                .userId(user.getUserId())
+                .name(user.getName())
+                .role(user.getRole())
+                .build();
+        String accessToken = jwtUtil.createAccessToken(dto);
+        return accessToken;
+    }
+
+    private Boolean isTokenExpired(RefreshToken token) {
+        return token.getExpiresIn() < System.currentTimeMillis();
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        Optional<RefreshToken> boxedSavedToken = refreshTokenRepository.findByToken(refreshToken);
+        if (boxedSavedToken.isPresent()){
+            RefreshToken savedToken = boxedSavedToken.get();
+            refreshTokenRepository.deleteByToken(savedToken);
+        }
     }
 }
