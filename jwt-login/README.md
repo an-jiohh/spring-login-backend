@@ -67,11 +67,11 @@ JWT (JSON Web Token) 기반 로그인을 구현하는 프로젝트입니다.
 
 ✅ TODO
 - [X] API 명세서 개선
-- [ ] JWT 기반 로그인 구현
-  - [ ] JwtUtil 구현 (Access + Refresh 생성/검증)
-  - [ ] 로그인 성공 시 2개의 토큰 발급
-  - [ ] 클라이언트는 Authorization 헤더에 accessToken 실어서 API 호출
-  - [ ] 인증 필터(JwtAuthFilter) 구현
-  - [ ] Access Token 재발급 구현
+- [X] JWT 기반 로그인 구현
+  - [X] JwtUtil 구현 (Access + Refresh 생성/검증)
+  - [X] 로그인 성공 시 2개의 토큰 발급
+  - [X] 클라이언트는 Authorization 헤더에 accessToken 실어서 API 호출
+  - [X] 인증 필터(JwtAuthFilter) 구현
+  - [X] Access Token 재발급 구현
 
 
