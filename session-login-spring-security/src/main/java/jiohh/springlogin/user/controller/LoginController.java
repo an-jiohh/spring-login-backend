@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jiohh.springlogin.response.ApiResponseDto;
+import jiohh.springlogin.security.CustomUserDetails;
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.InvalidCredentialsException;
 import jiohh.springlogin.user.exception.SessionExpiredException;
@@ -14,6 +15,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
@@ -26,16 +32,25 @@ public class LoginController {
 
     private final UserService userService;
 
-    @PostMapping("login")
+    @PostMapping("/login")
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto loginRequestDto, HttpServletRequest request) {
-        Optional<LoginSessionDto> loginResult = userService.login(loginRequestDto);
+        Optional<Authentication> loginResult = userService.login(loginRequestDto);
         if (loginResult.isPresent()) {
-            LoginSessionDto loginUser = loginResult.get();
-            request.getSession().setAttribute("loginUser", loginUser);
+            Authentication authentication = loginResult.get();
+
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+;
             LoginResponseDto responseDto = LoginResponseDto.builder()
-                    .userId(loginUser.getUserId())
-                    .name(loginUser.getName())
-                    .role(loginUser.getRole())
+                    .userId(userDetails.getUserId())
+                    .name(userDetails.getName())
+                    .role(userDetails.getRole())
                     .build();
             return ResponseEntity.ok(ApiResponseDto.success(responseDto));
         } else {
@@ -44,26 +59,24 @@ public class LoginController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody @Valid SignUpRequestDto signUpRequestDto,
-                                                                HttpSession session) {
+    public ResponseEntity<ApiResponseDto<Void>> registerUser(@RequestBody @Valid SignUpRequestDto signUpRequestDto) {
         log.info("Signup request: {}", signUpRequestDto);
         userService.registerUser(signUpRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponseDto.successWithNoData());
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<LogoutResponseDto> logout(HttpSession session){
-        try{
-            session.invalidate();
-        } catch (IllegalStateException e) {
-            throw new SessionInvalidationException();
-        }
-        return ResponseEntity.ok().body(new LogoutResponseDto("success"));
-    }
+//    @PostMapping("/logout")
+//    public ResponseEntity<LogoutResponseDto> logout(HttpSession session){
+//        try{
+//            session.invalidate();
+//        } catch (IllegalStateException e) {
+//            throw new SessionInvalidationException();
+//        }
+//        return ResponseEntity.ok().body(new LogoutResponseDto("success"));
+//    }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(HttpSession session) {
-        LoginSessionDto loginUser = (LoginSessionDto) session.getAttribute("loginUser");
+    public ResponseEntity<ApiResponseDto<SessionCheckResponseDto>> checkSession(@AuthenticationPrincipal CustomUserDetails loginUser) {
 
         if (loginUser == null) {
             throw new SessionExpiredException();
