@@ -1,5 +1,6 @@
 package jiohh.springlogin.user.service;
 
+import jiohh.springlogin.security.CustomUserDetails;
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.DuplicateUserIdException;
 import jiohh.springlogin.user.exception.InvalidRefreshTokenException;
@@ -13,6 +14,10 @@ import jiohh.springlogin.user.util.JwtUtil;
 import jiohh.springlogin.user.util.SaltUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,20 +32,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public Optional<UserDto> login(LoginRequestDto loginRequestDto) {
-        Optional<User> userOptional = userRepository.findByUserId(loginRequestDto.getUserId());
-        if (userOptional.isEmpty()){
-            return Optional.empty();
-        }
-        User user = userOptional.get();
-        String storedPassword = user.getPassword();
-        String salt = user.getSalt();
-        String hash = HashUtil.sha256(salt + loginRequestDto.getPassword());
-        if (!storedPassword.equals(salt + "$" + hash)) {
-            return Optional.empty();
-        }
+        Authentication authenticate = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequestDto.getUserId(), loginRequestDto.getPassword())
+        );
+
+        CustomUserDetails user = (CustomUserDetails) authenticate.getPrincipal();
 
         JwtPayloadDto tokenDto = JwtPayloadDto.builder()
                 .sub(user.getId())
@@ -52,7 +53,7 @@ public class UserService {
         String accessToken = jwtUtil.createAccessToken(tokenDto);
         String refreshToken = jwtUtil.createRefreshToken();
 
-        createRefreshToken(user.getId());
+        saveRefreshToken(user.getId(), refreshToken);
 
         UserDto response = UserDto.builder()
                 .id(user.getId())
@@ -66,17 +67,15 @@ public class UserService {
         return Optional.of(response);
     }
 
-    private void createRefreshToken(Long userId) {
-        String refreshToken = jwtUtil.createRefreshToken();
-
+    private void saveRefreshToken(Long userId, String newRefreshToken) {
         Optional<RefreshToken> boxedRefreshToken = refreshTokenRepository.findByUserId(userId);
         RefreshToken refreshTokenObject;
         if (boxedRefreshToken.isPresent()) {
             refreshTokenObject = boxedRefreshToken.get();
-            refreshTokenObject.updateRefreshToken(refreshToken);
+            refreshTokenObject.updateRefreshToken(newRefreshToken);
         } else {
             refreshTokenObject = RefreshToken.builder()
-                    .refreshToken(refreshToken)
+                    .refreshToken(newRefreshToken)
                     .userId(userId)
                     .expiresIn(System.currentTimeMillis() + jwtUtil.getRefreshTokenValiditySeconds())
                     .build();
@@ -89,10 +88,8 @@ public class UserService {
         if(userRepository.findByUserId(signUpRequestDto.getUserId()).isPresent()) {
             throw new DuplicateUserIdException("이미 존재하는 아이디입니다.");
         }
-        String salt = SaltUtil.generateSalt();
-        String password = signUpRequestDto.getPassword();
-        String hash = HashUtil.sha256(salt + password);
-        String encodedPassword = salt + "$" + hash;
+
+        String encodedPassword = passwordEncoder.encode(signUpRequestDto.getPassword());
 
         User user = User.builder()
                         .userId(signUpRequestDto.getUserId())

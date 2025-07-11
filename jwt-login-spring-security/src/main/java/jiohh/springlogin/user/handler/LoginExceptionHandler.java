@@ -3,6 +3,7 @@ package jiohh.springlogin.user.handler;
 import io.swagger.v3.oas.annotations.Hidden;
 import jiohh.springlogin.error.model.ErrorResponseDTO;
 import jiohh.springlogin.user.exception.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice(basePackages = "jiohh.springlogin.user")
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@Slf4j
 public class LoginExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> handleInvalidCredentialsException(InvalidCredentialsException e) {
@@ -77,4 +79,6 @@ public class LoginExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
+
+
 }

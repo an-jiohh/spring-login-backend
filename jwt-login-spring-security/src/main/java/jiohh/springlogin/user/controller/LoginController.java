@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jiohh.springlogin.resolver.LoginUser;
 import jiohh.springlogin.response.ApiResponseDto;
+import jiohh.springlogin.security.CustomUserDetails;
 import jiohh.springlogin.user.dto.*;
 import jiohh.springlogin.user.exception.InvalidCredentialsException;
 import jiohh.springlogin.user.exception.InvalidRefreshTokenException;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -32,7 +34,7 @@ public class LoginController {
         if (loginResult.isPresent()) {
             UserDto userDto = loginResult.get();
 
-
+            //sameSite 때문에 ResponseCookie 사용
             ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", userDto.getRefreshToken())
                     .httpOnly(true)
                     .secure(true)
@@ -95,7 +97,7 @@ public class LoginController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponseDto<UserCheckResponseDto>> checkUserInfo(@LoginUser UserDto user) {
+    public ResponseEntity<ApiResponseDto<UserCheckResponseDto>> checkUserInfo(@AuthenticationPrincipal CustomUserDetails user) {
         UserCheckResponseDto response = UserCheckResponseDto.builder()
                 .id(user.getId())
                 .userId(user.getUserId())

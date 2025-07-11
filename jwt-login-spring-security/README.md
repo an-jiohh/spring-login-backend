@@ -1,21 +1,9 @@
-# Spring Jwt 로그인
+# Spring Jwt 로그인 - 마이그레이션
 
 ## 📌 개요
 
-JWT (JSON Web Token) 기반 로그인을 구현하는 프로젝트입니다.
+JWT (JSON Web Token) 기반 로그인으로 구현한 프로젝트를 Spring Security 과 JJWT를 사용하여 마이그레이션을 진행한 프로젝트입니다.
 
-## ⚙️ 기술 스택
-
-- **Backend**: Spring Boot
-- **Frontend**: React
-- **Database**: H2 (인메모리 DB)
-
----
-
-## 🚀 구현 방식별 설명
-
-### 공통
-- Spring Data JPA의 추상화 대신, EntityManager를 명시적으로 사용하여 데이터베이스 접근 로직을 구현
 
 ### JWT 기반 로그인
 - 세션 방식으로 구현 완료, 세션 프로젝트를 기반으로 JWT으로 마이그레이션 진행
@@ -33,45 +21,45 @@ JWT (JSON Web Token) 기반 로그인을 구현하는 프로젝트입니다.
 
 ---
 
-## ⚙️ 마이그레이션 과정
+## 마이그레이션 과정
 
-### 설계(Access + Refresh Token 기반)
-1. 로그인 시 서버에서 2개의 토큰 발급
-   - Access Token (예: 30분)
-   - Refresh Token (예: 7일)
+1. Spring Security 설정 구성
+   - SecurityFilterChain을 직접 정의하여 필요한 보안 기능 선택적으로 활성화  
+   - CSRF, formLogin, httpBasic 등 불필요한 설정 제거  
+   - JWT 인증 필터를 Spring Security 필터 체인에 삽입
 
-2. Access Token은 Authorization: Bearer <token>으로 API 요청 시 사용
+2. UserDetails / UserDetailsService 구현
+   - 사용자 도메인 모델을 기반으로 커스텀 CustomUserDetails 생성 
+   - CustomUserDetailsService에서 DB 조회 후 인증 정보 반환
 
-3. 만료되면 Refresh Token을 이용해 Access Token 재발급
+3. 비밀번호 암호화
+   - PasswordEncoder 등록 및 회원가입 시 암호화 저장
+   - 기존 PasswordEncoder 없이 수동으로 Salt처리
 
-### 단계별 마이그레이션 진행
+4. JWT 유틸리티 마이그레이션
+   - 기존 Base64, Hash함수를 이용하여 수동으로 JWT생성을 마이그레이션
+   - JJWT 기반으로 AccessToken / RefreshToken 생성
+   - 서명 검증, 만료시간 체크, 사용자 정보 파싱 기능 포함
 
-1. JwtUtil 구현 (Access + Refresh 생성/검증)
-- 두 토큰의 만료 시간 다르게 설정
-- 비밀키 동일하게 사용 가능
-- 
-2. 로그인 성공 시 2개의 토큰 발급
-   (refreshToken은 HttpOnly 쿠키로 전달하는 것으로 고려)
+5. 로그인 처리
+   - AuthenticationManager를 통해 인증 로직 실행
+   - 인증 성공 시 AccessToken 응답 + RefreshToken은 HttpOnly 쿠키로 저장
 
-3. 클라이언트는 Authorization 헤더에 accessToken 실어서 API 호출
+6. JWT 인증 필터 구현
+   - 요청마다 Authorization 헤더의 Bearer 토큰 추출
+   - 토큰 유효성 검사 후 SecurityContextHolder에 인증 객체 저장
 
-4. 인증 필터(JwtAuthFilter)에서 Access Token 검증
+7. 사용자 정보 접근 방식 변경 
+   - @AuthenticationPrincipal 또는 SecurityContextHolder를 통해 현재 사용자 정보 접근
 
-5. Access Token 만료 시 Refresh Token을 통해 재발급
-   - 요청: POST /auth/refresh  
-   - 검증: Refresh Token 유효성 + 사용자 정보 확인  
-   - 응답: 새로운 Access Token   
+8. 토큰 재발급
+   - RefreshToken 유효성 검증 후 AccessToken 재발급 API 제공
+   - RefreshToken은 DB에 저장하여 클라이언트와 서버에서 함께 관리
+   - 재발급시 토큰 로테이션
+9. 로그아웃 처리
+   - RefreshToken 삭제 및 HttpOnly 쿠키 만료 설정
+   - 클라이언트 단에서 AccessToken도 제거
 
----
-
-
-✅ TODO
-- [X] API 명세서 개선
-- [X] JWT 기반 로그인 구현
-  - [X] JwtUtil 구현 (Access + Refresh 생성/검증)
-  - [X] 로그인 성공 시 2개의 토큰 발급
-  - [X] 클라이언트는 Authorization 헤더에 accessToken 실어서 API 호출
-  - [X] 인증 필터(JwtAuthFilter) 구현
-  - [X] Access Token 재발급 구현
-
-
+10. 인증/인가 예외 처리 설정
+    - AuthenticationEntryPoint → 401 (비로그인 요청)
+    - AccessDeniedHandler → 403 (권한 없는 요청)
