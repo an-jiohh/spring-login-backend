@@ -17,6 +17,11 @@
    
 추가적으로, 로그인 방식의 성능 차이에 대한 의문을 가지고 있었습니다. 이러한 궁금증을 해결하기 위해 각 방식으로 구현해보고 부하 테스트도 진행할 예정입니다.
 
+## 결과
+- [JWT와 Session의 성능 차이는 어떻게 될까? – 부하테스트 1(부하테스트 개요 및 환경 구성)](http://localhost:3001/blog/Backendload_test1)
+- [JWT와 Session의 성능 차이는 어떻게 될까? – 부하테스트 2(부하테스트 진행)](http://localhost:3001/blog/Backendload_test2)
+- [JWT와 Session의 성능 차이는 어떻게 될까? – 부하테스트 3(부하테스트 정리 및 회고)](http://localhost:3001/blog/Backendload_test3)
+
 ## 화면 구성
 
 ![Image](https://github.com/user-attachments/assets/b832c52e-c5c5-4892-9ef3-0b0592047bfd)
@@ -62,4 +67,4 @@
 - [X] JWT 기반 로그인 구현
 - [X] Spring Security 적용
 - [X] 테스트 코드 작성
-- [ ] 부하 테스트 (Load Testing) 진행 및 결과 정리
+- [X] 부하 테스트 (Load Testing) 진행 및 결과 정리
