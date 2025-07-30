@@ -11,6 +11,7 @@ build/
 .gradle/
 out/
 *.log
+bin/
 
 # JWT Secret or Env files (예: 나중에 추가될 수 있음)
 *.env
